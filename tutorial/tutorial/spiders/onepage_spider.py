@@ -17,15 +17,24 @@ class OnePageSpider(scrapy.Spider):
             return response.css(query).extract_first().strip()
 
         index = 0
+        handle =  slugify(extract_with_css('title::text').split("-")[0])
         for quote in response.xpath('//li[@data-thumb]'):
-            if index == 0:
+            if index == 1:
                 yield {
-                    'image':quote.xpath('a/@href').extract(),
-                    'title': slugify(extract_with_css('title::text').split("-")[0]),
+                    'Handle':handle,
+                    'title': extract_with_css('title::text').split("-")[0],
+                    'Image Src':quote.xpath('a/@href').extract(),
+                    'Image Position':index,    
+                    'body': response.xpath('//div[@id="tabs-1"]').re_first(),
+                    'Published': 'TRUE',
                 }
-                index = index + 1 
             else:    
                 yield {
-                    'image':quote.xpath('a/@href').extract(),
-                    'title':' ',
-                }     
+                    'Handle':handle,
+                    'title': '',
+                    'Image Src':quote.xpath('a/@href').extract(),
+                    'Image Position': index,
+                    'body':'',
+                    'Published': 'TRUE',
+                }
+            index = index + 1          
