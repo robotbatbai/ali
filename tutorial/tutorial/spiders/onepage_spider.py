@@ -7,7 +7,7 @@ class OnePageSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = [
-            'https://www.shopyplace.com/products/large-capacity-hanging-travel-organizer'
+            'https://printmazing.com/products/newfoundland-awesome-luggage-covers-2103?variant=11289208160299'
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
@@ -18,23 +18,24 @@ class OnePageSpider(scrapy.Spider):
 
         index = 0
         handle =  slugify(extract_with_css('title::text').split("-")[0])
-        for quote in response.xpath('//li[@data-thumb]'):
+        for quote in response.xpath('//div[@class="gallery-cell"]'):
             if index == 1:
                 yield {
                     'Handle':handle,
                     'title': extract_with_css('title::text').split("-")[0],
                     'Image Src':quote.xpath('a/@href').extract(),
                     'Image Position':index,    
-                    'body': response.xpath('//div[@id="tabs-1"]').re_first(),
+                    'body': '',
                     'Published': 'TRUE',
                 }
-            else:    
-                yield {
-                    'Handle':handle,
-                    'title': '',
-                    'Image Src':quote.xpath('a/@href').extract(),
-                    'Image Position': index,
-                    'body':'',
-                    'Published': 'TRUE',
-                }
+            else:
+                if (quote.xpath('a/@href').extract_first().strip() != ""):    
+                    yield {
+                        'Handle':handle,
+                        'title': '',
+                        'Image Src':quote.xpath('a/@href').extract_first().strip(),
+                        'Image Position': index,
+                        'body':'',
+                        'Published': 'TRUE',
+                    }
             index = index + 1          
