@@ -2,17 +2,26 @@ import scrapy
 from slugify import slugify
 
 
-class VariantSpider(scrapy.Spider):
-    name = "variant"
+class PrintAmazingSpider(scrapy.Spider):
+    name = 'printamazing'
 
-    def start_requests(self):
-        urls = [
-            'https://printmazing.com/products/american-pit-bull-terrier-face-all-over-print-full-zip-hoodie-for-men-model-h14'
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
+    start_urls = ['https://printmazing.com/search?type=product&q=HOODED+BLANKET']
 
     def parse(self, response):
+        def extract_with_xpath(query):
+            return response.xpath(query).extract_first().strip()
+        domain = 'https://printmazing.com'
+
+        # follow links to author pages
+        for product in response.css('div.thumbnail-overlay'):
+            product_href = domain + product.xpath('a/@href').extract_first().strip()
+            yield response.follow(product_href, self.parse_product)
+
+        # follow pagination links
+        for href in response.css('span.next a::attr(href)'):
+            yield response.follow(domain + href, self.parse)
+
+    def parse_product(self, response):
         def extract_with_css(query):
             return response.css(query).extract_first().strip()
         def extract_with_xpath(query):
@@ -63,5 +72,4 @@ class VariantSpider(scrapy.Spider):
                 'Variant Inventory Qty':'50',
                 #'Variant Price':extract_with_xpath('//span[@itemprop="price"]/following::span[1]/span[@class="money"]/text()[last()]'),
             }
-            index +=  1        
-                       
+            index +=  1  
