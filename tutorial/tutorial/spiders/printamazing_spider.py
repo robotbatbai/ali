@@ -31,17 +31,22 @@ class PrintAmazingSpider(scrapy.Spider):
         size = ['S','M','L','XL','XXL','XXXL']
         handle =  slugify(extract_with_css('title::text').split("-")[0])
         for quote in response.xpath('//div[@class="gallery-cell"]'):
+            images = "aaa" #quote.xpath('a/@href').extract()
+            #if images is None
+             #   continue
             if index == 0:
                 yield {
                     'Handle':handle,
                     'title': extract_with_css('title::text').split("-")[0],
-                    'Image Src':quote.xpath('a/@href').extract(),
+                    'Image Src': 'https' + images,
                     'Image Position':index +1,    
                     'body': '',
                     'Published': 'TRUE',
                     'Option1 Name':'Size',
                     'Option1 Value':size[index],
                     'Variant Inventory Qty':'50',
+                    'Variant Price': '89',
+                    'Variant Compare At Price':'178',
                     #'Variant Price':extract_with_xpath('//span[@class="current_price "]/span[@class="money"]/text()[last()]'),
                 }
             else:
@@ -49,13 +54,15 @@ class PrintAmazingSpider(scrapy.Spider):
                     yield {
                         'Handle':handle,
                         'title': '',
-                        'Image Src':quote.xpath('a/@href').extract_first().strip(),
+                        'Image Src': 'https' + images,
                         'Image Position': index + 1,
                         'body':'',
                         'Published': 'TRUE',
                         'Option1 Name':'',
                         'Option1 Value':size[index],
                         'Variant Inventory Qty':'50',
+                        'Variant Price': '89',
+                        'Variant Compare At Price':'178',
                         #'Variant Price':extract_with_xpath('//span[@itemprop="price"]/following::span[1]/span[@class="money"]/text()[last()]'),
                     }
             index += 1      
@@ -70,6 +77,8 @@ class PrintAmazingSpider(scrapy.Spider):
                 'Option1 Name':'',
                 'Option1 Value':size[index],
                 'Variant Inventory Qty':'50',
+                'Variant Price': '89',
+                'Variant Compare At Price':'178',
                 #'Variant Price':extract_with_xpath('//span[@itemprop="price"]/following::span[1]/span[@class="money"]/text()[last()]'),
             }
             index +=  1  
