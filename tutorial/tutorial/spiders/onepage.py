@@ -1,5 +1,6 @@
 import scrapy
 from slugify import slugify
+from pprint import pprint
 
 
 class OnePageSpider(scrapy.Spider):
@@ -40,21 +41,19 @@ class OnePageSpider(scrapy.Spider):
             <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
         size = ['Twin','Full','Queen','King','California King']
         handle =  slugify(extract_with_css('title::text').split(" | ")[0])
-        print("batdau")
-        for quote in response.css(' #gallery_main div.owl-item'):
-            images = 'https:' + quote.xpath('a/@href').extract_first().strip()
-            print("tttttttttt")
-            #print(images)
-            #if images is None
-            continue
+        tags = response.css('li.tags a::text').extract()
+        tags_list = ''.join(str(e).strip() for e in tags)
+        #print(''.join(str(e).strip() for e in tags))
+        for quote in response.css('div#gallery_main a.image-thumb::attr(href)').extract():
+            images = "https:"+ quote
             if index == 0:
                 yield {
                     'Handle':handle,
-                    'title': extract_with_css('title::text').split("-")[0],
+                    'title': extract_with_css('title::text').split(" | ")[0],
                     'Body (HTML)':body,
                     'Vendor':'',
-                    'Type':extract_with_css('li.type a/text()'),
-                    'Tags':'',
+                    'Type': extract_with_css('li.type a::text'),
+                    'Tags':tags_list,
                     'Published':'TRUE',
                     'Option1 Name':'Size',
                     'Option1 Value':size[index] if len(size) > index else "",
@@ -78,10 +77,10 @@ class OnePageSpider(scrapy.Spider):
                     'Image Alt Text':'',
                 }
             else:
-                if (quote.xpath('a/@href').extract_first().strip() != ""):    
+                if (quote != ""):    
                     yield {
                         'Handle':handle,
-                        'title': extract_with_css('title::text').split("-")[0],
+                        'title': extract_with_css('title::text').split(" | ")[0],
                         'Body (HTML)':'',
                         'Vendor':'',
                         'Type':'',
@@ -107,7 +106,7 @@ class OnePageSpider(scrapy.Spider):
                         'Image Src' : images,
                         'Image Position':index +1,   
                         'Image Alt Text':'',
-                    }
+                    }     
             index += 1      
         while (index < len(size)):
             yield {
