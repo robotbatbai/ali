@@ -3,12 +3,12 @@ from slugify import slugify
 from pprint import pprint
 
 
-class OnePageSpider(scrapy.Spider):
-    name = "onepage"
+class OneSpider(scrapy.Spider):
+    name = "one"
 
     def start_requests(self):
         urls = [
-            'https://threelemonshome.com/products/3d-customize-toucan-bedding-set-duvet-cover-set-bedroom-set-bedlinen-8'
+            'https://www.aliexpress.com/store/product/BeddingOutlet-Skull-Feathers-Sherpa-Blanket-Tribal-Indian-Plush-Throw-Blanket-Bohemian-Floral-Printed-Thin-Quilt-White/1160570_32936507930.html'
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
@@ -17,7 +17,11 @@ class OnePageSpider(scrapy.Spider):
         def extract_with_css(query):
             return response.css(query).extract_first().strip()
         def extract_with_xpath(query):
-            return response.xpath(query).extract_first().strip()    
+            return response.xpath(query).extract_first().strip()   
+        def edit_image(image):
+            return image.split("_")[0]
+        def remove_trademark(title):
+            return title.replace("BeddingOutlet ","")
 
         index = 0
         body = """<h3><strong>Description:</strong></h3>
@@ -40,20 +44,25 @@ class OnePageSpider(scrapy.Spider):
             </h3>
             <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
         size = ['Twin','Full','Queen','King','California King']
-        handle =  slugify(extract_with_css('title::text').split(" | ")[0])
-        tags = response.css('li.tags a::text').extract()
-        tags_list = ''.join(str(e).strip() for e in tags)
+        title = extract_with_css('h1.product-name::text')
+        #handle =  slugify(extract_with_css('title::text').split(" | ")[0])
+        #tags = response.css('li.tags a::text').extract()
+        #tags_list = ''.join(str(e).strip() for e in tags)
         #print(''.join(str(e).strip() for e in tags))
-        for quote in response.css('div#gallery_main a.image-thumb::attr(href)').extract():
-            images = "https:"+ quote
+        print(remove_trademark(title))
+        print("--------------")
+        #print(response.css('#j-image-thumb-list img::attr(src)').extract())
+        for quote in response.css('#j-image-thumb-list img::attr(src)').extract():
+            images = edit_image(quote)
+            print(images)
             if index == 0:
                 yield {
-                    'Handle':handle,
-                    'title': extract_with_css('title::text').split(" | ")[0],
-                    'Body (HTML)':body,
+                    'Handle':'',#handle,
+                    'title': '',#extract_with_css('title::text').split(" | ")[0],
+                    'Body (HTML)':'',#body,
                     'Vendor':'',
-                    'Type': extract_with_css('li.type a::text'),
-                    'Tags':tags_list,
+                    'Type': '',#extract_with_css('li.type a::text'),
+                    'Tags':'',#tags_list,
                     'Published':'TRUE',
                     'Option1 Name':'Size',
                     'Option1 Value':size[index] if len(size) > index else "",
@@ -79,8 +88,8 @@ class OnePageSpider(scrapy.Spider):
             else:
                 if (quote != ""):    
                     yield {
-                        'Handle':handle,
-                        'title': extract_with_css('title::text').split(" | ")[0],
+                        'Handle':'',#handle,
+                        'title': '',#extract_with_css('title::text').split(" | ")[0],
                         'Body (HTML)':'',
                         'Vendor':'',
                         'Type':'',
@@ -110,7 +119,7 @@ class OnePageSpider(scrapy.Spider):
             index += 1      
         while (index < len(size)):
             yield {
-                    'Handle':handle,
+                    'Handle':'',#handle,
                     'title': '',
                     'Body (HTML)':'',
                     'Vendor':'',

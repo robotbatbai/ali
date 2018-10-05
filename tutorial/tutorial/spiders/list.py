@@ -3,17 +3,27 @@ from slugify import slugify
 from pprint import pprint
 
 
-class OnePageSpider(scrapy.Spider):
-    name = "3page"
+class ListSpider(scrapy.Spider):
+    name = 'list'
 
-    def start_requests(self):
-        urls = [
-            'https://threelemonshome.com/products/3d-customize-toucan-bedding-set-duvet-cover-set-bedroom-set-bedlinen-8'
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
+    start_urls = ['https://beddingoutlet.aliexpress.com/store/group/Duvet-Cover-Set/1160570_254612212.html']
 
     def parse(self, response):
+        def extract_with_xpath(query):
+            return response.xpath(query).extract_first().strip()
+        domain = 'https:'
+
+        # follow links to author pages
+        for product in response.css('ul.items-list div.pic'):
+            product_href = domain + product.xpath('a/@href').extract_first().strip()
+            print(product_href)
+        #    yield response.follow(product_href, self.parse_product)
+
+        # follow pagination links
+        for href in response.css('a.ui-pagination-next::attr(href)').extract():
+            yield response.follow(domain + href, self.parse)
+
+    def parse_product(self, response):
         def extract_with_css(query):
             return response.css(query).extract_first().strip()
         def extract_with_xpath(query):
@@ -41,19 +51,20 @@ class OnePageSpider(scrapy.Spider):
             <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
         size = ['Twin','Full','Queen','King','California King']
         handle =  slugify(extract_with_css('title::text').split(" | ")[0])
-        tags = response.css('li.tags a::text').extract()
-        tags_list = ''.join(str(e).strip() for e in tags)
-        #print(''.join(str(e).strip() for e in tags))
-        for quote in response.css('div#gallery_main a.image-thumb::attr(href)').extract():
-            images = "https:"+ quote
+        for quote in response.css('#gallery_main div.owl-item'):
+            images = 'https:' + quote.xpath('a/@href').extract_first().strip()
+            pprint(quote)
+            continue
+            #if images is None
+             #   continue
             if index == 0:
                 yield {
                     'Handle':handle,
-                    'title': extract_with_css('title::text').split(" | ")[0],
+                    'title': extract_with_css('title::text').split("-")[0],
                     'Body (HTML)':body,
                     'Vendor':'',
-                    'Type': extract_with_css('li.type a::text'),
-                    'Tags':tags_list,
+                    'Type':'',#extract_with_css('li.type a/text()'),
+                    'Tags':'',
                     'Published':'TRUE',
                     'Option1 Name':'Size',
                     'Option1 Value':size[index] if len(size) > index else "",
@@ -77,10 +88,10 @@ class OnePageSpider(scrapy.Spider):
                     'Image Alt Text':'',
                 }
             else:
-                if (quote != ""):    
+                if (quote.xpath('a/@href').extract_first().strip() != ""):    
                     yield {
                         'Handle':handle,
-                        'title': extract_with_css('title::text').split(" | ")[0],
+                        'title': extract_with_css('title::text').split("-")[0],
                         'Body (HTML)':'',
                         'Vendor':'',
                         'Type':'',
@@ -106,7 +117,7 @@ class OnePageSpider(scrapy.Spider):
                         'Image Src' : images,
                         'Image Position':index +1,   
                         'Image Alt Text':'',
-                    }     
+                    }
             index += 1      
         while (index < len(size)):
             yield {
@@ -118,7 +129,7 @@ class OnePageSpider(scrapy.Spider):
                     'Tags':'',
                     'Published':'',
                     'Option1 Name':'',
-                    'Option1 Value':size[index] if len(size) > index else "",
+                    'Option1 Value':'',
                     'Option2 Name':'',
                     'Option2 Value':'',
                     'Option3 Name':'',
@@ -135,7 +146,7 @@ class OnePageSpider(scrapy.Spider):
                     'Variant Taxable':'',
                     'Variant Barcode':'',
                     'Image Src' : '',
-                    'Image Position':'',   
+                    'Image Position':index +1,   
                     'Image Alt Text':'',
             }
-            index +=  1          
+            index +=  1  
