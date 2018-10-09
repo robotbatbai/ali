@@ -6,7 +6,7 @@ from pprint import pprint
 class ThreeLemonSpider(scrapy.Spider):
     name = 'threelemon'
 
-    start_urls = ['https://threelemonshome.com/collections/animal']
+    start_urls = ['https://threelemonshome.com/collections/duvet-cover-set']
 
     def parse(self, response):
         def extract_with_xpath(query):
@@ -30,10 +30,10 @@ class ThreeLemonSpider(scrapy.Spider):
 
         index = 0
         body = """<h3><strong>Description:</strong></h3>
-            <p>1)This Item&nbsp;Is Customize Style,The Producing Time Is 7-10 Days.</p>
+            <p>1)This Item&nbsp;Is Customize Style,The Producing Time Is 3-5 Days.</p>
             <p>2)100% Microfiber,Soft and Comfortable.</p>
             <p>3)Environmental Dyeing,Never Lose Color.</p>
-            <p>4)2017 Newest Design,German Shepherd,Fashion and Personality.</p>
+            <p>4)2018 Newest Design,German Shepherd,Fashion and Personality.</p>
             <p>5)3pcs Total Have 1pc Duvet Cover/2pcs Pillowcases(Twin Size 1pc),Not Have Any Quilt/Comforter/Filling.</p>
             <p>6)Free Shipping By DHL,Fedex,UPS Express,Safe and Fast.Pls Don't Forget Give Us Your Phone No.</p>
             <div></div>
@@ -49,21 +49,20 @@ class ThreeLemonSpider(scrapy.Spider):
             </h3>
             <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
         size = ['Twin','Full','Queen','King','California King']
-        handle =  slugify(extract_with_css('title::text').split(" | ")[0])
-        for quote in response.css('#gallery_main div.owl-item'):
-            images = 'https:' + quote.xpath('a/@href').extract_first().strip()
-            pprint(quote)
-            continue
-            #if images is None
-             #   continue
+        title = extract_with_css('title::text').split(" | ")[0]
+        handle =  slugify(title)
+        tags = response.css('li.tags a::text').extract()
+        tags_list = ''.join(str(e).strip() for e in tags)
+        for quote in response.css('div#gallery_main a.image-thumb::attr(href)').extract():
+            images = "https:"+ quote
             if index == 0:
                 yield {
                     'Handle':handle,
-                    'title': extract_with_css('title::text').split("-")[0],
+                    'title': title,
                     'Body (HTML)':body,
                     'Vendor':'',
-                    'Type':'',#extract_with_css('li.type a/text()'),
-                    'Tags':'',
+                    'Type': extract_with_css('li.type a::text'),
+                    'Tags':tags_list,
                     'Published':'TRUE',
                     'Option1 Name':'Size',
                     'Option1 Value':size[index] if len(size) > index else "",
@@ -84,13 +83,13 @@ class ThreeLemonSpider(scrapy.Spider):
                     'Variant Barcode':'',
                     'Image Src' : images,
                     'Image Position':index +1,   
-                    'Image Alt Text':'',
+                    'Image Alt Text':title,
                 }
             else:
-                if (quote.xpath('a/@href').extract_first().strip() != ""):    
+                if (quote != ""):    
                     yield {
                         'Handle':handle,
-                        'title': extract_with_css('title::text').split("-")[0],
+                        'title': extract_with_css('title::text').split(" | ")[0],
                         'Body (HTML)':'',
                         'Vendor':'',
                         'Type':'',
@@ -115,8 +114,8 @@ class ThreeLemonSpider(scrapy.Spider):
                         'Variant Barcode':'',
                         'Image Src' : images,
                         'Image Position':index +1,   
-                        'Image Alt Text':'',
-                    }
+                        'Image Alt Text':title+tags_list,
+                    }     
             index += 1      
         while (index < len(size)):
             yield {
@@ -128,7 +127,7 @@ class ThreeLemonSpider(scrapy.Spider):
                     'Tags':'',
                     'Published':'',
                     'Option1 Name':'',
-                    'Option1 Value':'',
+                    'Option1 Value':size[index] if len(size) > index else "",
                     'Option2 Name':'',
                     'Option2 Value':'',
                     'Option3 Name':'',
@@ -145,7 +144,7 @@ class ThreeLemonSpider(scrapy.Spider):
                     'Variant Taxable':'',
                     'Variant Barcode':'',
                     'Image Src' : '',
-                    'Image Position':index +1,   
+                    'Image Position':'',   
                     'Image Alt Text':'',
             }
-            index +=  1  
+            index +=  1     
