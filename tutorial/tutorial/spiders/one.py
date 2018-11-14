@@ -8,7 +8,7 @@ class OneSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = [
-            'https://www.aliexpress.com/store/product/BeddingOutlet-Skull-Feathers-Sherpa-Blanket-Tribal-Indian-Plush-Throw-Blanket-Bohemian-Floral-Printed-Thin-Quilt-White/1160570_32936507930.html'
+            'https://www.aliexpress.com/store/product/BeddingOutlet-Watercolor-Dreamcatcher-Bedding-Set-King-Blue-Bedclothes-for-Adult-Kids-Luxury-Chinese-Style-Quilt-Cover/1160570_32831117756.html?spm=2114.12010612.8148356.3.1ff7d698kFpAbv'
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
@@ -43,29 +43,26 @@ class OneSpider(scrapy.Spider):
             <br><br><span>Care:</span>
             </h3>
             <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
-        size = ['Twin','Full','Queen','King','California King']
+        size = [['Twin',69,89],['Full',79,129],['Queen',89,139]]
         title = extract_with_css('h1.product-name::text')
-        #handle =  slugify(extract_with_css('title::text').split(" | ")[0])
+        handle =  slugify(title)
         #tags = response.css('li.tags a::text').extract()
-        #tags_list = ''.join(str(e).strip() for e in tags)
-        #print(''.join(str(e).strip() for e in tags))
-        print(remove_trademark(title))
-        print("--------------")
+        tags_list = title.replace(" ",",")
+        typeProduct = "duvet cover, bedding sets"
         #print(response.css('#j-image-thumb-list img::attr(src)').extract())
         for quote in response.css('#j-image-thumb-list img::attr(src)').extract():
             images = edit_image(quote)
-            print(images)
             if index == 0:
                 yield {
-                    'Handle':'',#handle,
-                    'title': '',#extract_with_css('title::text').split(" | ")[0],
+                    'Handle':handle,
+                    'title': title,
                     'Body (HTML)':'',#body,
                     'Vendor':'',
-                    'Type': '',#extract_with_css('li.type a::text'),
-                    'Tags':'',#tags_list,
+                    'Type': typeProduct,
+                    'Tags':tags_list,
                     'Published':'TRUE',
                     'Option1 Name':'Size',
-                    'Option1 Value':size[index] if len(size) > index else "",
+                    'Option1 Value':size[index][0] if len(size) > index else "",
                     'Option2 Name':'',
                     'Option2 Value':'',
                     'Option3 Name':'',
@@ -73,11 +70,11 @@ class OneSpider(scrapy.Spider):
                     'Variant SKU':'',
                     'Variant Grams':'',
                     'Variant Inventory Tracker':'',
-                    'Variant Inventory Qty':'50' if len(size) > index else "",
+                    'Variant Inventory Qty':50 if len(size) > index else "",
                     'Variant Inventory Policy':'deny' if len(size) > index else "",
                     'Variant Fulfillment Service':'manual' if len(size) > index else "",
-                    'Variant Price': '89' if len(size) > index else "",
-                    'Variant Compare At Price':'178' if len(size) > index else "",
+                    'Variant Price': size[index][1] if len(size) > index else "",
+                    'Variant Compare At Price':size[index][2] if len(size) > index else "",
                     'Variant Requires Shipping':'',
                     'Variant Taxable':'',
                     'Variant Barcode':'',
@@ -88,7 +85,7 @@ class OneSpider(scrapy.Spider):
             else:
                 if (quote != ""):    
                     yield {
-                        'Handle':'',#handle,
+                        'Handle':handle,
                         'title': '',#extract_with_css('title::text').split(" | ")[0],
                         'Body (HTML)':'',
                         'Vendor':'',
@@ -96,7 +93,7 @@ class OneSpider(scrapy.Spider):
                         'Tags':'',
                         'Published':'TRUE' if len(size) > index else "",
                         'Option1 Name':'',
-                        'Option1 Value':size[index] if len(size) > index else "",
+                        'Option1 Value':size[index][0] if len(size) > index else "",
                         'Option2 Name':'',
                         'Option2 Value':'',
                         'Option3 Name':'',
@@ -104,11 +101,11 @@ class OneSpider(scrapy.Spider):
                         'Variant SKU':'',
                         'Variant Grams':'',
                         'Variant Inventory Tracker':'',
-                        'Variant Inventory Qty':'50' if len(size) > index else "",
+                        'Variant Inventory Qty':50 if len(size) > index else "",
                         'Variant Inventory Policy':'deny' if len(size) > index else "",
                         'Variant Fulfillment Service':'manual' if len(size) > index else "",
-                        'Variant Price': '89' if len(size) > index else "",
-                        'Variant Compare At Price':'178' if len(size) > index else "",
+                        'Variant Price': size[index][1] if len(size) > index else "",
+                        'Variant Compare At Price':size[index][2] if len(size) > index else "",
                         'Variant Requires Shipping':'',
                         'Variant Taxable':'',
                         'Variant Barcode':'',
@@ -119,15 +116,15 @@ class OneSpider(scrapy.Spider):
             index += 1      
         while (index < len(size)):
             yield {
-                    'Handle':'',#handle,
+                    'Handle':handle,
                     'title': '',
                     'Body (HTML)':'',
                     'Vendor':'',
                     'Type':'',
                     'Tags':'',
-                    'Published':'',
+                    'Published':'TRUE',
                     'Option1 Name':'',
-                    'Option1 Value':size[index] if len(size) > index else "",
+                    'Option1 Value':size[index],
                     'Option2 Name':'',
                     'Option2 Value':'',
                     'Option3 Name':'',
@@ -135,11 +132,11 @@ class OneSpider(scrapy.Spider):
                     'Variant SKU':'',
                     'Variant Grams':'',
                     'Variant Inventory Tracker':'',
-                    'Variant Inventory Qty':'',
-                    'Variant Inventory Policy':'',
-                    'Variant Fulfillment Service':'',
-                    'Variant Price': '',
-                    'Variant Compare At Price':'',
+                    'Variant Inventory Qty':'50',
+                    'Variant Inventory Policy':'deny',
+                    'Variant Fulfillment Service':'manual',
+                    'Variant Price': size[index][1] ,
+                    'Variant Compare At Price':size[index][2],
                     'Variant Requires Shipping':'',
                     'Variant Taxable':'',
                     'Variant Barcode':'',
