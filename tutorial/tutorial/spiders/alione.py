@@ -3,12 +3,12 @@ from slugify import slugify
 from pprint import pprint
 
 
-class LemoSpider(scrapy.Spider):
-    name = "lemon"
+class AlioneSpider(scrapy.Spider):
+    name = "alione"
 
     def start_requests(self):
         urls = [
-            'https://threelemonshome.com/products/3d-customize-justice-league-bedding-set-duvet-cover-set-bedroom-set-bedlinen?variant=2546212667422'
+            'https://www.aliexpress.com/store/product/BeddingOutlet-Skull-Feathers-Sherpa-Blanket-Tribal-Indian-Plush-Throw-Blanket-Bohemian-Floral-Printed-Thin-Quilt-White/1160570_32936507930.html'
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
@@ -17,8 +17,12 @@ class LemoSpider(scrapy.Spider):
         def extract_with_css(query):
             return response.css(query).extract_first().strip()
         def extract_with_xpath(query):
-            return response.xpath(query).extract_first().strip()    
-
+            return response.xpath(query).extract_first().strip()   
+        def edit_image(image):
+            return image.split("_")[0]
+        def remove_trademark(title):
+            return title.replace("BeddingOutlet ","")
+        
         index = 0
         body = """<h3><strong>Description:</strong></h3>
             <p>1)This Item&nbsp;Is Customize Style,The Producing Time Is 7-10 Days.</p>
@@ -40,24 +44,24 @@ class LemoSpider(scrapy.Spider):
             </h3>
             <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
         size = ['Twin','Full','Queen','King','California King']
-        #title = extract_with_css('title::text').split(" | ")[0]
-        title = response.xpath('//h1[@class="hidden-phone"]/text()').extract()[0].strip()
-        colors = response.xpath('//div[@class="variants-wrapper clearfix"]/select/option').extract()
-        if (len(colors) > 5):
-            return
-        handle =  slugify(title)
-        tags = response.css('li.tags a::text').extract()
-        tags_list = ''.join(str(e).strip() for e in tags)
-        for quote in response.css('div#gallery_main a.image-thumb::attr(href)').extract():
-            images = "https:"+ quote
+        title = remove_trademark(extract_with_css('h1.product-name::text'))
+        #handle =  slugify(extract_with_css('title::text').split(" | ")[0])
+        #tags = response.css('li.tags a::text').extract()
+        #tags_list = ''.join(str(e).strip() for e in tags)
+        #print(''.join(str(e).strip() for e in tags))
+        print(remove_trademark(title))
+        print("--------------")
+        #print(response.css('#j-image-thumb-list img::attr(src)').extract())
+        for quote in response.css('#j-image-thumb-list img::attr(src)').extract():
+            images = edit_image(quote)
             if index == 0:
                 yield {
-                    'Handle':handle,
-                    'title': title,
-                    'Body (HTML)':body,
+                    'Handle':'',#handle,
+                    'title': '',#extract_with_css('title::text').split(" | ")[0],
+                    'Body (HTML)':'',#body,
                     'Vendor':'',
-                    'Type': extract_with_css('li.type a::text'),
-                    'Tags':tags_list,
+                    'Type': '',#extract_with_css('li.type a::text'),
+                    'Tags':'',#tags_list,
                     'Published':'TRUE',
                     'Option1 Name':'Size',
                     'Option1 Value':size[index] if len(size) > index else "",
@@ -78,13 +82,13 @@ class LemoSpider(scrapy.Spider):
                     'Variant Barcode':'',
                     'Image Src' : images,
                     'Image Position':index +1,   
-                    'Image Alt Text':title,
+                    'Image Alt Text':'',
                 }
             else:
                 if (quote != ""):    
                     yield {
-                        'Handle':handle,
-                        'title': '',
+                        'Handle':'',#handle,
+                        'title': '',#extract_with_css('title::text').split(" | ")[0],
                         'Body (HTML)':'',
                         'Vendor':'',
                         'Type':'',
@@ -109,18 +113,18 @@ class LemoSpider(scrapy.Spider):
                         'Variant Barcode':'',
                         'Image Src' : images,
                         'Image Position':index +1,   
-                        'Image Alt Text':title+tags_list,
+                        'Image Alt Text':'',
                     }     
             index += 1      
         while (index < len(size)):
             yield {
-                    'Handle':handle,
+                    'Handle':'',#handle,
                     'title': '',
                     'Body (HTML)':'',
                     'Vendor':'',
                     'Type':'',
                     'Tags':'',
-                    'Published':'TRUE',
+                    'Published':'',
                     'Option1 Name':'',
                     'Option1 Value':size[index] if len(size) > index else "",
                     'Option2 Name':'',
@@ -142,4 +146,4 @@ class LemoSpider(scrapy.Spider):
                     'Image Position':'',   
                     'Image Alt Text':'',
             }
-            index +=  1            
+            index +=  1          

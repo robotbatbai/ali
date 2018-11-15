@@ -2,72 +2,64 @@ import scrapy
 from slugify import slugify
 from pprint import pprint
 
+import ali_config
+item = ali_config.duvetClass()
 
 class ListSpider(scrapy.Spider):
     name = 'list'
+    global item
 
-    start_urls = ['https://beddingoutlet.aliexpress.com/store/group/Duvet-Cover-Set/1160570_254612212.html']
-
+    start_urls = item.urls 
     def parse(self, response):
+        global item
         def extract_with_xpath(query):
             return response.xpath(query).extract_first().strip()
         domain = 'https:'
 
         # follow links to author pages
-        for product in response.css('ul.items-list div.pic'):
+        for product in response.css(item.pageDetail):
             product_href = domain + product.xpath('a/@href').extract_first().strip()
-            print(product_href)
-        #    yield response.follow(product_href, self.parse_product)
+            yield response.follow(product_href, self.parse_product)
 
         # follow pagination links
-        for href in response.css('a.ui-pagination-next::attr(href)').extract():
+        for href in response.css(item.nextPage).extract():
             yield response.follow(domain + href, self.parse)
 
     def parse_product(self, response):
+        global item
         def extract_with_css(query):
             return response.css(query).extract_first().strip()
         def extract_with_xpath(query):
-            return response.xpath(query).extract_first().strip()    
-
+            return response.xpath(query).extract_first().strip()   
+        def edit_image(image):
+            return image.rsplit("_",1)[0]
+        def remove_trademark(title):  
+            global item
+            for ch in item.replaceList:
+                if ch in title: 
+                    title = title.replace(ch,"")
+            return ' '.join(title.split())
+     
+        title = remove_trademark(extract_with_css(item.title))
+        print(title)
+        handle =  slugify(title)
+        size = item.size
         index = 0
-        body = """<h3><strong>Description:</strong></h3>
-            <p>1)This Item&nbsp;Is Customize Style,The Producing Time Is 7-10 Days.</p>
-            <p>2)100% Microfiber,Soft and Comfortable.</p>
-            <p>3)Environmental Dyeing,Never Lose Color.</p>
-            <p>4)2017 Newest Design,German Shepherd,Fashion and Personality.</p>
-            <p>5)3pcs Total Have 1pc Duvet Cover/2pcs Pillowcases(Twin Size 1pc),Not Have Any Quilt/Comforter/Filling.</p>
-            <p>6)Free Shipping By DHL,Fedex,UPS Express,Safe and Fast.Pls Don't Forget Give Us Your Phone No.</p>
-            <div></div>
-            <h3><strong>Before You Take Order,Pls Check The Size Chart Below:</strong></h3>
-            <p>Twin Size(2 pcs)</p>
-            <p>1 pc duvet cover:172*218cm(68*86inch)<br>1 pc pillowcase:50*75cm(19*29inch)<br><br>Full Size(3 pcs)<br>1 pc duvet cover:200*229cm(79*90inch)<br>2 pcs pillowcase:50*75cm(19*29inch)<br><br>Queen Size(3 pcs)<br>1 pc duvet cover:228*228cm(90*90inch)<br>2 pcs pillowcase:50*75cm(19*29inch)<br><br>King Size(3 pcs)<br>1 pc duvet cover:259*229cm(102*90inch)<br>2 pcs pillowcase:50*75cm(19*29inch)</p>
-            <p><span>California King Size(3 pcs)</span><br><span>1 pc duvet cover:264*239cm(104*94inch)</span><br><span>2 pcs pillowcase:50*75cm(19*29inch)</span></p>
-            <h3>
-            <br>Specification:</h3>
-            <p><br>1)100% Microfiber Polyester,soft,comfortable and durable.<br>2)Reactive Dying,Non-Fading,Non-Pilling, Non-Wrinkle.<br>3)Fabric Density:130x70,Fabric Count:50x50<br>4)Best choice for your unique bedroom</p>
-            <h3>
-            <br><br><span>Care:</span>
-            </h3>
-            <p><br><span>Machine Wash in Cold, Dry on Low.</span></p> """
-        size = ['Twin','Full','Queen','King','California King']
-        handle =  slugify(extract_with_css('title::text').split(" | ")[0])
-        for quote in response.css('#gallery_main div.owl-item'):
-            images = 'https:' + quote.xpath('a/@href').extract_first().strip()
-            pprint(quote)
-            continue
-            #if images is None
-             #   continue
+        #tags_list = item.tags_list #title.replace(" ",",")
+        #productType = item.productType
+        for image in response.css(item.spiltImage).extract():
+            images = edit_image(image)
             if index == 0:
                 yield {
                     'Handle':handle,
-                    'title': extract_with_css('title::text').split("-")[0],
-                    'Body (HTML)':body,
+                    'title': title,
+                    'Body (HTML)':item.body,
                     'Vendor':'',
-                    'Type':'',#extract_with_css('li.type a/text()'),
-                    'Tags':'',
+                    'Type': item.productType,
+                    'Tags':item.taglist,
                     'Published':'TRUE',
                     'Option1 Name':'Size',
-                    'Option1 Value':size[index] if len(size) > index else "",
+                    'Option1 Value':size[index][0] if len(size) > index else "",
                     'Option2 Name':'',
                     'Option2 Value':'',
                     'Option3 Name':'',
@@ -75,11 +67,11 @@ class ListSpider(scrapy.Spider):
                     'Variant SKU':'',
                     'Variant Grams':'',
                     'Variant Inventory Tracker':'',
-                    'Variant Inventory Qty':'50' if len(size) > index else "",
+                    'Variant Inventory Qty':50 if len(size) > index else "",
                     'Variant Inventory Policy':'deny' if len(size) > index else "",
                     'Variant Fulfillment Service':'manual' if len(size) > index else "",
-                    'Variant Price': '89' if len(size) > index else "",
-                    'Variant Compare At Price':'178' if len(size) > index else "",
+                    'Variant Price': size[index][1] if len(size) > index else "",
+                    'Variant Compare At Price':size[index][2] if len(size) > index else "",
                     'Variant Requires Shipping':'',
                     'Variant Taxable':'',
                     'Variant Barcode':'',
@@ -88,17 +80,17 @@ class ListSpider(scrapy.Spider):
                     'Image Alt Text':'',
                 }
             else:
-                if (quote.xpath('a/@href').extract_first().strip() != ""):    
+                if (image != ""):    
                     yield {
                         'Handle':handle,
-                        'title': extract_with_css('title::text').split("-")[0],
+                        'title': '',
                         'Body (HTML)':'',
                         'Vendor':'',
                         'Type':'',
                         'Tags':'',
                         'Published':'TRUE' if len(size) > index else "",
                         'Option1 Name':'',
-                        'Option1 Value':size[index] if len(size) > index else "",
+                        'Option1 Value':size[index][0] if len(size) > index else "",
                         'Option2 Name':'',
                         'Option2 Value':'',
                         'Option3 Name':'',
@@ -106,18 +98,18 @@ class ListSpider(scrapy.Spider):
                         'Variant SKU':'',
                         'Variant Grams':'',
                         'Variant Inventory Tracker':'',
-                        'Variant Inventory Qty':'50' if len(size) > index else "",
+                        'Variant Inventory Qty':50 if len(size) > index else "",
                         'Variant Inventory Policy':'deny' if len(size) > index else "",
                         'Variant Fulfillment Service':'manual' if len(size) > index else "",
-                        'Variant Price': '89' if len(size) > index else "",
-                        'Variant Compare At Price':'178' if len(size) > index else "",
+                        'Variant Price': size[index][1] if len(size) > index else "",
+                        'Variant Compare At Price':size[index][2] if len(size) > index else "",
                         'Variant Requires Shipping':'',
                         'Variant Taxable':'',
                         'Variant Barcode':'',
                         'Image Src' : images,
                         'Image Position':index +1,   
                         'Image Alt Text':'',
-                    }
+                    }     
             index += 1      
         while (index < len(size)):
             yield {
@@ -127,9 +119,9 @@ class ListSpider(scrapy.Spider):
                     'Vendor':'',
                     'Type':'',
                     'Tags':'',
-                    'Published':'',
+                    'Published':'TRUE',
                     'Option1 Name':'',
-                    'Option1 Value':'',
+                    'Option1 Value':size[index],
                     'Option2 Name':'',
                     'Option2 Value':'',
                     'Option3 Name':'',
@@ -137,16 +129,16 @@ class ListSpider(scrapy.Spider):
                     'Variant SKU':'',
                     'Variant Grams':'',
                     'Variant Inventory Tracker':'',
-                    'Variant Inventory Qty':'',
-                    'Variant Inventory Policy':'',
-                    'Variant Fulfillment Service':'',
-                    'Variant Price': '',
-                    'Variant Compare At Price':'',
+                    'Variant Inventory Qty':'50',
+                    'Variant Inventory Policy':'deny',
+                    'Variant Fulfillment Service':'manual',
+                    'Variant Price': size[index][1] ,
+                    'Variant Compare At Price':size[index][2],
                     'Variant Requires Shipping':'',
                     'Variant Taxable':'',
                     'Variant Barcode':'',
                     'Image Src' : '',
-                    'Image Position':index +1,   
+                    'Image Position':'',   
                     'Image Alt Text':'',
             }
-            index +=  1  
+            index +=  1   
