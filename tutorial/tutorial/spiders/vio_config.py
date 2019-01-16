@@ -1,15 +1,17 @@
-class duvetClass:
-    size = [['Twin',78.5,98],['Full',84.5,105.6],['Queen',89.5,111.9],['King',98.5,123],['California King',98.5,123]]
-    taglist = "duvet cover, bedding sets"
-    productType = "duvet cover, bedding sets"
+class hoodieClass:
+    size = [['HOODIE',42.5,79.5],['SWEATSHIRT',36.5,69.5],['T-SHIRT',27.5,44.5],['ZIP',45.5,79.5],['TANK',26.5,39.5],['KID',24.5,39.5]]
+    taglist = "ALL OVER PRINT"
+    productType = "ALL OVER PRINT"
     # start from this url 
-    url = ['https://www.aliexpress.com/store/product/BeddingOutlet-Watercolor-Dreamcatcher-Bedding-Set-King-Blue-Bedclothes-for-Adult-Kids-Luxury-Chinese-Style-Quilt-Cover/1160570_32831117756.html']
-    urls = ['https://beddingoutlet.aliexpress.com/store/group/Dreamcatcher-Duvet-Cover-Set/1160570_513026552.html']
+    url = ['https://vio-store.com/collections/all-over-print-shirts/products/anime-ghibli-my-neighbor-totoro-sleep-in-the-green-forest-3d-all-over-print-tshirt-hoodie-sweater-tank']
+    urls = ['https://vio-store.com/collections/all-over-print-shirts']
 
     # list keyword filter from title 
     replaceList = ['BeddingOutlet','Chinese','King ', 'Blue ','for Adult Kids ','3 Pcs','Dropship','King ','Queen ','Size ', 'Full Queen',]
     spiltImage = "#j-image-thumb-list img::attr(src)"
-    title = "h1.product-name::text"
+    title = "//title/text()" 
+    #heading = "//h1[@itemprop="name"]/text()"
+    
     
     # get list page 
     pageDetail = "ul.items-list div.pic"

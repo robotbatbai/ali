@@ -1,8 +1,9 @@
 import scrapy
 from slugify import slugify
 from pprint import pprint
+from random import randint
 
-import ali_config
+from . import ali_config
 item = ali_config.duvetClass()
 
 class ListSpider(scrapy.Spider):
@@ -45,6 +46,7 @@ class ListSpider(scrapy.Spider):
         handle =  slugify(title)
         size = item.size
         index = 0
+        body = item.body[randint(0,3)]
         #tags_list = item.tags_list #title.replace(" ",",")
         #productType = item.productType
         for image in response.css(item.spiltImage).extract():
@@ -53,7 +55,7 @@ class ListSpider(scrapy.Spider):
                 yield {
                     'Handle':handle,
                     'title': title,
-                    'Body (HTML)':item.body,
+                    'Body (HTML)':body,
                     'Vendor':'',
                     'Type': item.productType,
                     'Tags':item.taglist,

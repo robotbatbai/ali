@@ -2,7 +2,7 @@ import scrapy
 from slugify import slugify
 from pprint import pprint
 
-import ali_config
+from . import ali_config
 item = ali_config.duvetClass()
 
 class OneSpider(scrapy.Spider):
