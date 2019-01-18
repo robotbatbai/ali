@@ -19,11 +19,13 @@ class DemoSpider(scrapy.Spider):
         def getPrice(price):
             temp = 1.0 * int(price) / 100
             return temp
-        #domain = 'https://printmazing.com'
+        domain = "https://vio-store.com"
+        def removeId(image):
+            temp = image.split("?")
+            return temp[0]
 
         # follow links to author pages
         for product in response.xpath('//a[@class="grid__image"]/@href').extract():
-            domain = "https://vio-store.com"
             product_href = domain + product+ ".js"
 
             with request.urlopen(product_href) as url:
@@ -41,7 +43,7 @@ class DemoSpider(scrapy.Spider):
             i = 0
             for item in variants:
                 if i < len(images):
-                    image = images[i]
+                    image = "https:"+ removeId(images[i])
                     image_option = i + 1
                 else:
                     image = ""
@@ -49,7 +51,7 @@ class DemoSpider(scrapy.Spider):
                 alttext = title + " " + item["option1"]
 
                 yield{
-                    'Handle': handle if i == 0 else "",
+                    'Handle': handle,
                     'title': title if i == 0 else "",
                     'Body (HTML)': description if i == 0 else "",
                     'Vendor': vendor,
@@ -75,15 +77,14 @@ class DemoSpider(scrapy.Spider):
                     'Variant Barcode':'',
                     'Image Src' : image,
                     'Image Position':image_option,   
-                    'Image Alt Text': alttext,
-                    'Variant Image':item["featured_image"]["src"],
+                    'Image Alt Text': alttext if i == 0 else "",
+                    'Variant Image':removeId(item["featured_image"]["src"]),
                 }
                 i += 1
-            break
 
         # follow pagination links
-        # for href in response.css('span.next a::attr(href)').extract():
-        #     yield response.follow(domain + href, self.parse)
+        for href in response.css('span.next a::attr(href)').extract():
+            yield response.follow(domain + href, self.parse)
     
 
         
