@@ -21,8 +21,11 @@ class DemoSpider(scrapy.Spider):
             return temp
         domain = "https://vio-store.com"
         def removeId(image):
-            temp = image.split("?")
-            return temp[0]
+            try:
+                temp = image.split("?")
+                return temp[0]
+            except: 
+                return ""
 
         # follow links to author pages
         for product in response.xpath('//a[@class="grid__image"]/@href').extract():
@@ -49,6 +52,11 @@ class DemoSpider(scrapy.Spider):
                     image = ""
                     image_option = ""
                 alttext = title + " " + item["option1"]
+
+                try: 
+                    variant_image = removeId(item["featured_image"]["src"])
+                except:
+                    variant_image  = ""
 
                 yield{
                     'Handle': handle,
@@ -78,7 +86,7 @@ class DemoSpider(scrapy.Spider):
                     'Image Src' : image,
                     'Image Position':image_option,   
                     'Image Alt Text': alttext if i == 0 else "",
-                    'Variant Image':removeId(item["featured_image"]["src"]),
+                    'Variant Image':variant_image,
                 }
                 i += 1
 
